@@ -1,323 +1,192 @@
 import React, { useState } from "react";
-import { Grid, Box, Typography, Input, TextField } from "@mui/material";
+import {
+  Typography,
+  Grid,
+  Select,
+  MenuItem,
+  Table,
+  TableBody,
+  TableRow,
+  TableCell,
+  Button,
+  TextField,
+} from "@mui/material";
+import * as math from "mathjs";
 
 const Main = () => {
-  const [matriz, setMatriz] = useState({
-    dim: 0,
-    matriz: null,
-  });
+  const [size, setSize] = useState(3); // tamanho inicial da matriz
+  const [vector, setVector] = useState(Array(size).fill(0)); // vetor de valores
+  const [matrix, setMatrix] = useState(createMatrix(size));
+  const [solution, setSolution] = useState(null); // solução do sistema linear
+
+  // Função para criar a matriz quadrada
+  function createMatrix(size) {
+    const newMatrix = [];
+    for (let i = 0; i < size; i++) {
+      const row = [];
+      for (let j = 0; j < size; j++) {
+        row.push(0);
+      }
+      newMatrix.push(row);
+    }
+    return newMatrix;
+  }
+
+  // Função para atualizar o tamanho da matriz e vetor
+  function handleSizeChange(event) {
+    const newSize = parseInt(event.target.value);
+    setSize(newSize);
+    setVector(Array(newSize).fill(0));
+    setMatrix(createMatrix(newSize));
+    setSolution(null);
+  }
+
+  // Função para atualizar um elemento da matriz
+  function handleMatrixChange(event, rowIdx, colIdx) {
+    const newValue = parseInt(event.target.value);
+    const newMatrix = [...matrix];
+    newMatrix[rowIdx][colIdx] = newValue;
+    setMatrix(newMatrix);
+    setSolution(null);
+  }
+
+  // Função para atualizar um valor do vetor
+  function handleVectorChange(event, idx) {
+    const newValue = parseInt(event.target.value);
+    const newVector = [...vector];
+    newVector[idx] = newValue;
+    setVector(newVector);
+    setSolution(null);
+  }
+
+  // Função para resolver o sistema linear
+  function solveSystem() {
+    try {
+      const solution = math.lusolve(matrix, vector);
+      console.log("Solução:", solution);
+      setSolution(solution);
+    } catch (error) {
+      setSolution(null);
+      alert("O sistema linear não possui solução.");
+    }
+  }
 
   return (
     <div>
-      <Box
-        sx={{
-          maxWidth: "100vw",
-          display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <Grid
-          container
+      <Grid item xs={12}>
+        <Typography
+          variant="h4"
           sx={{
+            fontFamily: "Candara",
+            fontWeight: "bold",
+            color: "#006400",
             display: "flex",
             flexDirection: "row",
             alignItems: "center",
             justifyContent: "center",
-            //   backgroundColor: 'red',
-            minWidth: "100vw",
+            margin: "2%",
           }}
         >
-          <Grid item xs={12}>
-            <Typography
-              variant="h4"
-              sx={{
-                fontFamily: "Candara",
-                fontWeight: "bold",
-                color: "#006400",
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                margin: "2%",
-              }}
-            >
-              Calculadora de Matriz
-            </Typography>
-          </Grid>
+          Calculadora de Matriz
+        </Typography>
+      </Grid>
 
-          <Grid item xs={12}>
-            <Typography
-              variant="subtitle2"
-              sx={{
-                display: "flex",
-                flexDirection: "row",
-                alignItems: "center",
-                justifyContent: "center",
-                fontFamily: "Candara",
-                fontWeight: "bold",
-                color: "black",
-              }}
-            >
-              Digite o espaço do vetor (ex: 2 para R2, 3 para R3):
-            </Typography>
-          </Grid>
-
-          <Grid
-            item
-            xs={12}
-            sx={{
-              margin: "3%",
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
+      <Grid
+        item
+        xs={12}
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <label>
+          Tamanho da matriz:
+          <Select
+            value={size}
+            onChange={handleSizeChange}
+            sx={{ marginLeft: "1rem" }}
           >
-            <Input
-              type="number"
-              onChange={(e) => {
+            <MenuItem value={2}>2x2</MenuItem>
+            <MenuItem value={3}>3x3</MenuItem>
+            <MenuItem value={4}>4x4</MenuItem>
+            {/* Adicione mais opções de tamanho, se desejar */}
+          </Select>
+        </label>
+      </Grid>
 
-                if(e.target.value <= 3 && e.target.value >= 0){
-
-                  setMatriz({
-                    ...matriz,
-                    dim: e.target.value,
-                  });
-                }
-                }}
-              value={matriz.dim}
-            />
-          </Grid>
-        </Grid>
-      </Box>
-
-      <Box
+      <Grid
+        item
+        xs={12}
+        sx={{ display: "flex", justifyContent: "center", alignItems: "center" }}
+      >
+        <Table>
+          <TableBody>
+            {matrix.map((row, rowIdx) => (
+              <TableRow key={rowIdx}>
+                {row.map((cell, colIdx) => (
+                  <TableCell key={colIdx}>
+                    <TextField
+                      type="number"
+                      value={cell}
+                      onChange={(event) =>
+                        handleMatrixChange(event, rowIdx, colIdx)
+                      }
+                      variant="outlined"
+                      size="small"
+                      style={{ width: "5rem", marginRight: "0.5rem" }}
+                    />
+                  </TableCell>
+                ))}
+                <TableCell>
+                  <TextField
+                    type="number"
+                    value={vector[rowIdx]}
+                    onChange={(event) => handleVectorChange(event, rowIdx)}
+                    variant="outlined"
+                    size="small"
+                    style={{ width: "5rem", marginRight: "0.5rem" }}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </Grid>
+      <Grid
+        item
+        xs={12}
         sx={{
-          maxWidth: "100vw",
           display: "flex",
-          flexDirection: "row",
-          alignItems: "center",
           justifyContent: "center",
+          alignItems: "center",
+          marginTop: "1rem",
         }}
       >
+        <Button variant="contained" onClick={solveSystem}>
+          Resolver Sistema Linear
+        </Button>
+      </Grid>
+
+      {solution && (
         <Grid
-          container
+          item
+          xs={12}
           sx={{
-            maxWidth: "80vw",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            marginTop: "1rem",
           }}
-          spacing={10}
         >
-          {/* Colunas da matriz */}
-          <Grid
-            item
-            xs={3}
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {/* Linhas */}
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-            </Grid>
-          </Grid>
-
-          <Grid
-            item
-            xs={3}
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-             {/* Linhas */}
-            <Grid container spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-            </Grid>
-          </Grid>
-
-          <Grid
-            item
-            xs={3}
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {/* Linhas */}
-            <Grid container  spacing={3}>
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-            </Grid>
-          </Grid>
-
-          <Grid
-            item
-            xs={3}
-            sx={{
-              display: "flex",
-              flexDirection: "row",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {/* Linhas */}
-            <Grid container  spacing={3} sx={{
-              borderLeft: "1px solid"
-            }}>
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-              <Grid item xs={12}>
-                <TextField
-                  type="number"
-                  onChange={(e) => {
-                    setMatriz({
-                      ...matriz,
-                      dim: e.target.value,
-                    });
-                  }}
-                />
-              </Grid>
-
-            </Grid>
-          </Grid>
-
+          <div>
+            <Typography variant="h6">Solução:</Typography>
+            <ul>
+              {solution.map((value, idx) => (
+                <li key={idx}>
+                  x{idx + 1} = {value}
+                </li>
+              ))}
+            </ul>
+          </div>
         </Grid>
-      </Box>
+      )}
     </div>
   );
 };
