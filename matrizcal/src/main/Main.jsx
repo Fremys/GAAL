@@ -11,13 +11,13 @@ import {
   Button,
   TextField,
 } from "@mui/material";
-import * as math from "mathjs";
 
-const Main = () => {
+const ExampleComponent = () => {
   const [size, setSize] = useState(3); // tamanho inicial da matriz
   const [vector, setVector] = useState(Array(size).fill(0)); // vetor de valores
   const [matrix, setMatrix] = useState(createMatrix(size));
   const [solution, setSolution] = useState(null); // solução do sistema linear
+  const [steps, setSteps] = useState([]); // passo a passo da resolução
 
   // Função para criar a matriz quadrada
   function createMatrix(size) {
@@ -39,6 +39,7 @@ const Main = () => {
     setVector(Array(newSize).fill(0));
     setMatrix(createMatrix(newSize));
     setSolution(null);
+    setSteps([]);
   }
 
   // Função para atualizar um elemento da matriz
@@ -48,6 +49,7 @@ const Main = () => {
     newMatrix[rowIdx][colIdx] = newValue;
     setMatrix(newMatrix);
     setSolution(null);
+    setSteps([]);
   }
 
   // Função para atualizar um valor do vetor
@@ -57,18 +59,73 @@ const Main = () => {
     newVector[idx] = newValue;
     setVector(newVector);
     setSolution(null);
+    setSteps([]);
   }
 
   // Função para resolver o sistema linear
   function solveSystem() {
     try {
-      const solution = math.lusolve(matrix, vector);
+      const augmentedMatrix = createAugmentedMatrix(matrix, vector);
+      const [solution, steps] = gaussJordanElimination(augmentedMatrix);
       console.log("Solução:", solution);
       setSolution(solution);
+      setSteps(steps);
     } catch (error) {
       setSolution(null);
+      setSteps([]);
       alert("O sistema linear não possui solução.");
     }
+  }
+
+  // Função para criar a matriz aumentada
+  function createAugmentedMatrix(matrix, vector) {
+    const augmentedMatrix = [];
+    for (let i = 0; i < matrix.length; i++) {
+      augmentedMatrix.push([...matrix[i], vector[i]]);
+    }
+    return augmentedMatrix;
+  }
+  // Função para executar a eliminação de Gauss-Jordan
+  function gaussJordanElimination(augmentedMatrix) {
+    const steps = [augmentedMatrix.map((row) => [...row])];
+    const n = augmentedMatrix.length;
+
+    for (let pivot = 0; pivot < n; pivot++) {
+      // Pivoteamento parcial
+      let maxRowIndex = pivot;
+      for (let i = pivot + 1; i < n; i++) {
+        if (
+          Math.abs(augmentedMatrix[i][pivot]) >
+          Math.abs(augmentedMatrix[maxRowIndex][pivot])
+        ) {
+          maxRowIndex = i;
+        }
+      }
+      [augmentedMatrix[pivot], augmentedMatrix[maxRowIndex]] = [
+        augmentedMatrix[maxRowIndex],
+        augmentedMatrix[pivot],
+      ];
+
+      // Escalonamento
+      for (let i = pivot + 1; i < n; i++) {
+        const ratio = augmentedMatrix[i][pivot] / augmentedMatrix[pivot][pivot];
+        for (let j = pivot; j <= n; j++) {
+          augmentedMatrix[i][j] -= ratio * augmentedMatrix[pivot][j];
+        }
+      }
+
+      // Normalização
+      const divisor = augmentedMatrix[pivot][pivot];
+      for (let j = pivot; j <= n; j++) {
+        augmentedMatrix[pivot][j] /= divisor;
+      }
+
+      steps.push(augmentedMatrix.map((row) => [...row]));
+    }
+
+    const solution = augmentedMatrix.map((row) => row[n]);
+
+    return [solution, steps];
   }
 
   return (
@@ -90,7 +147,6 @@ const Main = () => {
           Calculadora de Matriz
         </Typography>
       </Grid>
-
       <Grid
         item
         xs={12}
@@ -120,6 +176,9 @@ const Main = () => {
           <TableBody>
             {matrix.map((row, rowIdx) => (
               <TableRow key={rowIdx}>
+                <TableCell>
+                  <label>|</label>
+                </TableCell>
                 {row.map((cell, colIdx) => (
                   <TableCell key={colIdx}>
                     <TextField
@@ -135,6 +194,9 @@ const Main = () => {
                   </TableCell>
                 ))}
                 <TableCell>
+                  <label>|</label>
+                </TableCell>
+                <TableCell>
                   <TextField
                     type="number"
                     value={vector[rowIdx]}
@@ -143,6 +205,9 @@ const Main = () => {
                     size="small"
                     style={{ width: "5rem", marginRight: "0.5rem" }}
                   />
+                </TableCell>
+                <TableCell>
+                  <label>|</label>
                 </TableCell>
               </TableRow>
             ))}
@@ -163,7 +228,6 @@ const Main = () => {
           Resolver Sistema Linear
         </Button>
       </Grid>
-
       {solution && (
         <Grid
           item
@@ -177,18 +241,28 @@ const Main = () => {
         >
           <div>
             <Typography variant="h6">Solução:</Typography>
-            <ul>
-              {solution.map((value, idx) => (
-                <li key={idx}>
-                  x{idx + 1} = {value}
-                </li>
-              ))}
-            </ul>
+            {solution.map((value, idx) => (
+              <li key={idx}>{`x${idx + 1} = ${value}`}</li>
+            ))}
           </div>
         </Grid>
       )}
+      <div>
+        {steps.length > 0 && (
+          <div>
+            {steps.map((step, idx) => (
+              <div key={idx}>
+                <Typography variant="h6">Passo {idx + 1}:</Typography>
+                {step.map((row, rowIdx) => (
+                  <div key={rowIdx}>{row.join(" | ")}</div>
+                ))}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
-export default Main;
+export default ExampleComponent;
